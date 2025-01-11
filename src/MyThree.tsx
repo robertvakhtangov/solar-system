@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 function MyThree() {
   const refContainer = useRef(null);
+
   useEffect(() => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -15,28 +16,56 @@ function MyThree() {
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
 
+    function makeInstance(geometry, color: number, x: number) {
+      const material = new THREE.MeshPhongMaterial({
+        color,
+        flatShading: true,
+      });
+
+      const cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+
+      cube.position.x = x;
+
+      return cube;
+    }
+
     if (refContainer.current) {
       refContainer.current.appendChild(renderer.domElement);
     }
 
-    const geometry = new THREE.SphereGeometry(1, 100, 100);
+    const geometry = new THREE.SphereGeometry(1, 10, 10);
     // const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+
+    const cubes = [
+      makeInstance(geometry, 0x44aa88, 0),
+      makeInstance(geometry, 0x8844aa, -5),
+      makeInstance(geometry, 0xaa8844, 5),
+    ];
     camera.position.z = 5;
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    scene.add(directionalLight);
+    const color = 0xfff;
+    const intensity = 3;
+    const light = new THREE.DirectionalLight(color, intensity);
+    light.position.set(-1, 2, 4);
+    scene.add(light);
 
     let animationFrameId: number;
-    const animate = function () {
-      animationFrameId = requestAnimationFrame(animate);
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
+    const animate = function (time) {
+      time *= 0.001;
+      // const cube = cubes[0];
+
+      cubes.forEach((cube, ndx) => {
+        const speed = 1 + ndx * 0.1;
+        const rot = time * speed;
+        cube.rotation.x = rot;
+        cube.rotation.y = rot;
+      });
+      // cube.rotateOnAxis(new THREE.Vector3(0, 0, 0), 2);
       renderer.render(scene, camera);
+      animationFrameId = requestAnimationFrame(animate);
     };
-    animate();
+    requestAnimationFrame(animate);
 
     const handleResize = () => {
       const width = window.innerWidth;
